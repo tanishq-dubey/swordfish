@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 
 learningRate = 0.2
 
@@ -51,6 +52,11 @@ def layerOneBackprop(l, a):
 			dW = a.weightDelta[0][x] * l.inVals[y] * a.weights[0][x] * dSigmoid(l.layerOut[x])
 			l.weights[x][y] = l.weights[x][y] - (learningRate * dW)
 
+def update_line(hl, new_datax, new_datay):
+    hl.set_xdata(np.append(hl.get_xdata(), new_datax))
+    hl.set_ydata(np.append(hl.get_ydata(), new_datay))
+    plt.draw()
+
 #Parse the File data
 # Open the file and put it in a list of lines
 f = open('mushroom-training.txt', 'r').readlines()
@@ -70,7 +76,9 @@ x = layer(3, np.random.uniform(-1,1), d)
 y = layer(1, np.random.uniform(-1,1), x.layerOut)
 errorSum = 0
 
-while runNum < 50001:
+hl, = plt.plot([], [])
+
+while runNum < 40000:
 	l = f[lineNum]
 	# Remove whitespace, split by comma
 	p = l.replace(' ','').split(',')
@@ -86,11 +94,10 @@ while runNum < 50001:
 	layerOneBackprop(x, y)
 	currError = error(t, y.layerOut[0])
 	errorSum = errorSum + currError
+	with open("errorTraining.txt", "a") as myfile:
+		myfile.write(str(currError) + "\n")
 	if runNum % 1000 == 0:
-		np.save('weights1.npy', x.weights)
-		np.save('weights2.npy', y.weights)
-		np.savetxt('weights1.txt', x.weights)
-		np.savetxt('weights2.txt', y.weights)
+		update_line(hl, runNum, currError)
 		print "RUN NUMBER: "+ str(runNum) +" LOSS: " + str(currError)
 		print "TARGET VAL VS OUTPUT: " + str(t) + ", " + str(y.layerOut[0])
 		print "ERR AVG: " + str(errorSum/runNum)
@@ -103,13 +110,12 @@ while runNum < 50001:
 
 print "SWITCHING TO TEST DATA"
 print "======================"
-raw_input()
 
 f = open('mushroom-testing.txt', 'r').readlines()
 runNum = 0
 lineNum = 0
 
-while True:
+while runNum < 40000:
 	l = f[lineNum]
 	# Remove whitespace, split by comma
 	p = l.replace(' ','').split(',')
@@ -125,6 +131,8 @@ while True:
 	#layerOneBackprop(x, y)
 	currError = error(t, y.layerOut[0])
 	errorSum = errorSum + currError
+	with open("errorTesting.txt", "a") as myfile:
+		myfile.write(str(currError) + "\n")
 	if runNum % 100 == 0:
 		np.save('weights1.npy', x.weights)
 		np.save('weights2.npy', y.weights)
